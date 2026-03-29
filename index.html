@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OrtoPay — Gestão de Honorários</title>
+  <style>
+    :root{
+      --bg:#07111f;
+      --bg-2:#0d1a2d;
+      --surface:#101e34;
+      --surface-2:#162742;
+      --surface-3:#1d3152;
+      --line:rgba(180,197,224,.14);
+      --text:#edf3ff;
+      --muted:#9baecc;
+      --primary:#6fb6ff;
+      --primary-2:#8bd6ff;
+      --gold:#ddb870;
+      --green:#3bc97c;
+      --yellow:#f2bc4b;
+      --red:#f46b6b;
+      --shadow:0 20px 60px rgba(0,0,0,.28);
+      --radius:24px;
+      --radius-md:18px;
+      --radius-sm:14px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:radial-gradient(circle at top left, rgba(111,182,255,.10), transparent 28%), linear-gradient(180deg, #06101c 0%, #081321 100%);color:var(--text);font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif}
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer}
+    .app-shell{min-height:100vh;display:grid;grid-template-columns:290px 1fr}
+    .sidebar{position:sticky;top:0;height:100vh;padding:24px 18px;border-right:1px solid var(--line);background:rgba(8,16,29,.72);backdrop-filter:blur(18px)}
+    .brand{display:flex;gap:14px;align-items:center;padding:10px 10px 20px}
+    .brand-mark{width:48px;height:48px;border-radius:16px;background:linear-gradient(135deg, rgba(111,182,255,.22), rgba(221,184,112,.18));display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+    .brand-mark span{font-size:22px}
+    .brand h1{margin:0;font-size:20px;letter-spacing:.01em}
+    .brand p{margin:4px 0 0;color:var(--muted);font-size:12px}
+    .doctor-card{padding:16px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(180deg, rgba(22,39,66,.95), rgba(13,26,45,.88));box-shadow:var(--shadow);margin-bottom:18px}
+    .doctor-card small{display:block;color:var(--muted);margin-bottom:6px}
+    .doctor-card strong{display:block;font-size:17px}
+    .doctor-card .sub{margin-top:6px;color:var(--muted);font-size:13px}
+    .nav{display:grid;gap:10px;margin-top:12px}
+    .nav button{border:none;text-align:left;padding:14px 14px;border-radius:18px;background:transparent;color:var(--muted);display:flex;gap:12px;align-items:flex-start;transition:.2s}
+    .nav button .ico{width:38px;height:38px;border-radius:14px;background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;flex:none}
+    .nav button strong{display:block;color:inherit;font-size:14px}
+    .nav button span{display:block;font-size:12px;margin-top:2px;opacity:.88}
+    .nav button.active{background:linear-gradient(180deg, rgba(111,182,255,.16), rgba(111,182,255,.08));color:var(--text);border:1px solid rgba(111,182,255,.18)}
+    .nav button.active .ico{background:linear-gradient(135deg, rgba(111,182,255,.24), rgba(221,184,112,.18))}
+    .sidebar-footer{margin-top:auto;padding:18px 10px 6px;color:var(--muted);font-size:12px}
+    .content{padding:28px 28px 110px}
+    .topbar{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-bottom:24px}
+    .headline h2{margin:0;font-size:30px;letter-spacing:-.03em}
+    .headline p{margin:8px 0 0;color:var(--muted);max-width:760px;line-height:1.5}
+    .actions{display:flex;gap:12px;flex-wrap:wrap}
+    .btn{border:none;border-radius:16px;padding:13px 16px;font-weight:600;transition:.2s}
+    .btn-primary{background:linear-gradient(135deg, var(--primary), var(--primary-2));color:#06213d;box-shadow:0 16px 30px rgba(111,182,255,.18)}
+    .btn-secondary{background:rgba(255,255,255,.05);color:var(--text);border:1px solid var(--line)}
+    .btn-gold{background:linear-gradient(135deg, rgba(221,184,112,.88), rgba(244,214,157,.95));color:#2e2412}
+    .view{display:none}
+    .view.active{display:block}
+    .grid{display:grid;gap:18px}
+    .kpi-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .card{background:linear-gradient(180deg, rgba(16,30,52,.95), rgba(11,22,39,.95));border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .kpi{padding:20px;position:relative;overflow:hidden}
+    .kpi::after{content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle, rgba(255,255,255,.06), transparent 62%)}
+    .kpi .label{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+    .kpi .value{margin-top:12px;font-size:30px;font-weight:800;letter-spacing:-.04em}
+    .kpi .meta{margin-top:8px;font-size:13px;color:var(--muted)}
+    .kpi.primary .value{color:var(--primary-2)}
+    .kpi.gold .value{color:var(--gold)}
+    .kpi.green .value{color:var(--green)}
+    .kpi.red .value{color:var(--red)}
+    .layout-2{grid-template-columns:1.55fr 1fr}
+    .section-card{padding:20px}
+    .section-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:16px}
+    .section-head h3{margin:0;font-size:18px}
+    .section-head p{margin:4px 0 0;color:var(--muted);font-size:13px}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--muted);font-size:12px}
+    .timeline{display:grid;gap:12px}
+    .timeline-item{padding:14px 16px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.03);display:flex;justify-content:space-between;gap:14px;align-items:center}
+    .timeline-item strong{display:block}
+    .timeline-item small{display:block;color:var(--muted);margin-top:4px}
+    .amount{font-weight:800;letter-spacing:-.02em}
+    .amount.green{color:var(--green)} .amount.gold{color:var(--gold)} .amount.red{color:var(--red)}
+    .month-bars{display:grid;gap:12px}
+    .month-row{display:grid;grid-template-columns:74px 1fr auto;gap:12px;align-items:center}
+    .track{height:12px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden}
+    .fill{height:100%;border-radius:999px;background:linear-gradient(135deg, var(--primary), var(--gold))}
+    .list{display:grid;gap:12px}
+    .surgery-card,.receipt-card,.report-card,.setting-card{padding:18px;border:1px solid var(--line);border-radius:22px;background:rgba(255,255,255,.03)}
+    .surgery-top,.receipt-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+    .title-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .badge{display:inline-flex;align-items:center;gap:8px;padding:7px 11px;border-radius:999px;font-size:12px;font-weight:700}
+    .badge.realizada,.badge.faturada{background:rgba(242,188,75,.13);color:var(--yellow)}
+    .badge.parcial{background:rgba(111,182,255,.13);color:var(--primary-2)}
+    .badge.recebida{background:rgba(59,201,124,.12);color:var(--green)}
+    .badge.atrasada{background:rgba(244,107,107,.12);color:var(--red)}
+    .muted{color:var(--muted)}
+    .split{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}
+    .mini-stat{padding:13px 14px;border-radius:18px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.05)}
+    .mini-stat span{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
+    .mini-stat strong{font-size:16px}
+    .code-table{margin-top:14px;border-top:1px solid rgba(255,255,255,.07)}
+    .code-row{display:grid;grid-template-columns:120px 1fr 78px 98px 110px;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);align-items:center}
+    .code-row.head{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+    .report-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .report-card h4,.setting-card h4{margin:0 0 8px;font-size:16px}
+    .report-card p,.setting-card p{margin:0;color:var(--muted);line-height:1.55;font-size:13px}
+    .flow{display:grid;gap:14px}
+    .flow-step{display:grid;grid-template-columns:48px 1fr;gap:14px;align-items:flex-start}
+    .flow-step .num{width:48px;height:48px;border-radius:16px;background:linear-gradient(135deg, rgba(111,182,255,.2), rgba(221,184,112,.18));display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--primary-2);border:1px solid rgba(255,255,255,.08)}
+    .flow-step h5{margin:0 0 6px;font-size:15px}
+    .flow-step p{margin:0;color:var(--muted);line-height:1.5;font-size:13px}
+    .filter-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+    .select,input,textarea{width:100%;padding:13px 14px;border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);outline:none}
+    textarea{min-height:100px;resize:vertical}
+    .field-grid{display:grid;gap:14px;grid-template-columns:repeat(2,minmax(0,1fr))}
+    .field{display:grid;gap:8px}
+    .field label{font-size:13px;color:var(--muted)}
+    .modal-backdrop{position:fixed;inset:0;background:rgba(4,8,15,.72);backdrop-filter:blur(10px);display:none;align-items:flex-end;justify-content:center;padding:18px;z-index:120}
+    .modal-backdrop.open{display:flex}
+    .modal{width:min(940px,100%);max-height:92vh;overflow:auto;border-radius:28px;background:linear-gradient(180deg, #0f1c31 0%, #0a1424 100%);border:1px solid var(--line);box-shadow:var(--shadow)}
+    .modal-head{position:sticky;top:0;padding:20px 22px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;justify-content:space-between;gap:14px;align-items:flex-start;background:rgba(15,28,49,.94);backdrop-filter:blur(12px);z-index:2}
+    .modal-body{padding:22px;display:grid;gap:20px}
+    .step-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+    .step-tab{padding:12px 14px;border-radius:18px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--muted);font-weight:700;text-align:left}
+    .step-tab.active{background:rgba(111,182,255,.12);color:var(--text);border-color:rgba(111,182,255,.2)}
+    .code-picker{display:grid;gap:12px}
+    .picker-results{display:grid;gap:10px;max-height:280px;overflow:auto;padding-right:4px}
+    .picker-item{padding:14px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.03);display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+    .picker-item strong{display:block;margin-bottom:4px}
+    .picker-item small{display:block;color:var(--muted);line-height:1.45}
+    .selected-items{display:grid;gap:10px}
+    .selected-item{padding:14px;border-radius:18px;background:rgba(255,255,255,.03);border:1px solid var(--line);display:grid;gap:12px}
+    .selected-item-top{display:flex;justify-content:space-between;gap:10px}
+    .inline-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+    .chip-row{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--muted);font-size:12px}
+    .modal-actions{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .empty-state{padding:28px;border-radius:22px;border:1px dashed rgba(255,255,255,.14);color:var(--muted);text-align:center;background:rgba(255,255,255,.02)}
+    .bottom-nav{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;width:min(720px,calc(100% - 18px));display:none;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;padding:10px;border:1px solid var(--line);border-radius:24px;background:rgba(8,16,29,.86);backdrop-filter:blur(18px);box-shadow:var(--shadow);z-index:110}
+    .bottom-nav button{background:transparent;border:none;border-radius:18px;padding:10px 8px;color:var(--muted);display:grid;justify-items:center;gap:4px;font-size:11px}
+    .bottom-nav button.active{background:rgba(111,182,255,.12);color:var(--text)}
+    .text-right{text-align:right}
+    .hide{display:none!important}
+    @media (max-width:1180px){
+      .kpi-grid,.report-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .layout-2{grid-template-columns:1fr}
+      .inline-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+    @media (max-width:900px){
+      .app-shell{grid-template-columns:1fr}
+      .sidebar{display:none}
+      .content{padding:22px 16px 120px}
+      .topbar{flex-direction:column;align-items:flex-start}
+      .bottom-nav{display:grid}
+    }
+    @media (max-width:720px){
+      .kpi-grid,.report-grid,.field-grid,.split,.inline-grid{grid-template-columns:1fr}
+      .code-row{grid-template-columns:1fr;gap:6px}
+      .code-row.head{display:none}
+      .timeline-item,.surgery-top,.receipt-top{flex-direction:column;align-items:flex-start}
+      .headline h2{font-size:28px}
+      .modal-head,.modal-body{padding:18px}
+      .step-tabs{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark"><span>🦴</span></div>
+        <div>
+          <h1>OrtoPay</h1>
+          <p>Produção cirúrgica, previsão e recebimentos</p>
+        </div>
+      </div>
+
+      <div class="doctor-card">
+        <small>Perfil ativo</small>
+        <strong>Dr. Pedro Cunha</strong>
+        <div class="sub">Ortopedia • Ombro e Cotovelo</div>
+      </div>
+
+      <nav class="nav" id="sideNav">
+        <button class="active" data-view="home"><div class="ico">🏠</div><div><strong>Home</strong><span>Visão financeira do mês</span></div></button>
+        <button data-view="cirurgias"><div class="ico">🗂️</div><div><strong>Cirurgias</strong><span>Casos, códigos e status</span></div></button>
+        <button data-view="recebimentos"><div class="ico">💰</div><div><strong>Recebimentos</strong><span>Pagamentos e pendências</span></div></button>
+        <button data-view="relatorios"><div class="ico">📊</div><div><strong>Relatórios</strong><span>Performance e previsões</span></div></button>
+        <button data-view="ajustes"><div class="ico">⚙️</div><div><strong>Ajustes</strong><span>Convênios, hospitais e base</span></div></button>
+      </nav>
+
+      <div class="sidebar-footer">Novo eixo do app: cirurgia realizada → previsão → pagamento real.</div>
+    </aside>
+
+    <main class="content">
+      <div class="topbar">
+        <div class="headline" id="headlineBox">
+          <h2>Home financeira</h2>
+          <p>O núcleo do OrtoPay passa a ser o caixa do cirurgião: o que já entrou, o que deve entrar neste mês e o que está atrasado para conferência.</p>
+        </div>
+        <div class="actions">
+          <button class="btn btn-secondary" id="seedDemoBtn">Recarregar dados demo</button>
+          <button class="btn btn-primary" id="openNewCaseTop">Nova cirurgia</button>
+        </div>
+      </div>
+
+      <section class="view active" id="view-home">
+        <div class="grid kpi-grid" id="kpiGrid"></div>
+
+        <div class="grid layout-2" style="margin-top:18px">
+          <div class="card section-card">
+            <div class="section-head">
+              <div>
+                <h3>Próximos recebimentos previstos</h3>
+                <p>Cirurgias com valor a receber organizado por prioridade financeira.</p>
+              </div>
+              <div class="pill">Caixa previsto</div>
+            </div>
+            <div class="timeline" id="upcomingList"></div>
+          </div>
+
+          <div class="card section-card">
+            <div class="section-head">
+              <div>
+                <h3>Receita projetada</h3>
+                <p>Distribuição prevista por mês com base nas cirurgias cadastradas.</p>
+              </div>
+            </div>
+            <div class="month-bars" id="forecastBars"></div>
+          </div>
+        </div>
+
+        <div class="grid layout-2" style="margin-top:18px">
+          <div class="card section-card">
+            <div class="section-head">
+              <div>
+                <h3>Cirurgias recentes</h3>
+                <p>Casos lançados com total previsto, recebido e saldo pendente.</p>
+              </div>
+              <button class="btn btn-secondary" data-go-view="cirurgias">Ver todas</button>
+            </div>
+            <div class="list" id="recentSurgeries"></div>
+          </div>
+          <div class="card section-card">
+            <div class="section-head">
+              <div>
+                <h3>Alertas do mês</h3>
+                <p>Itens que exigem ação rápida na rotina de conferência.</p>
+              </div>
+            </div>
+            <div class="timeline" id="alertList"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-cirurgias">
+        <div class="filter-bar">
+          <select class="select" id="surgeryFilterStatus" style="max-width:220px">
+            <option value="all">Todos os status</option>
+            <option value="realizada">Realizada</option>
+            <option value="faturada">Faturada</option>
+            <option value="parcial">Parcialmente recebida</option>
+            <option value="recebida">Recebida</option>
+          </select>
+          <input id="surgerySearch" placeholder="Buscar por paciente, convênio, hospital ou código" style="max-width:420px" />
+          <button class="btn btn-primary" id="openNewCase">Cadastrar cirurgia</button>
+        </div>
+        <div class="list" id="surgeryList"></div>
+      </section>
+
+      <section class="view" id="view-recebimentos">
+        <div class="filter-bar">
+          <select class="select" id="receiptFilterMonth" style="max-width:230px"></select>
+          <button class="btn btn-gold" id="openReceiveModal">Registrar recebimento</button>
+        </div>
+        <div class="list" id="receiptList"></div>
+      </section>
+
+      <section class="view" id="view-relatorios">
+        <div class="grid report-grid">
+          <div class="card report-card">
+            <h4>Hospital com maior geração</h4>
+            <p id="topHospital"></p>
+          </div>
+          <div class="card report-card">
+            <h4>Convênio com maior valor pendente</h4>
+            <p id="topPlanPending"></p>
+          </div>
+          <div class="card report-card">
+            <h4>Código mais recorrente</h4>
+            <p id="topCode"></p>
+          </div>
+        </div>
+
+        <div class="grid layout-2" style="margin-top:18px">
+          <div class="card section-card">
+            <div class="section-head">
+              <div>
+                <h3>Como esse novo OrtoPay funciona</h3>
+                <p>Estrutura pensada para substituir a agenda como protagonista.</p>
+              </div>
+            </div>
+            <div class="flow">
+              <div class="flow-step"><div class="num">1</div><div><h5>Cadastra o caso cirúrgico</h5><p>Paciente, convênio, hospital, data da cirurgia e prazo provável de repasse entram juntos no mesmo cadastro.</p></div></div>
+              <div class="flow-step"><div class="num">2</div><div><h5>Adiciona múltiplos códigos CBHPM</h5><p>O caso aceita procedimento principal, complementares e auxílios, cada um com quantidade, multiplicador e valor esperado.</p></div></div>
+              <div class="flow-step"><div class="num">3</div><div><h5>O app calcula previsto, recebido e saldo</h5><p>Isso gera visão de caixa por cirurgia, por mês, por hospital e por convênio, com foco em pendência e conferência.</p></div></div>
+              <div class="flow-step"><div class="num">4</div><div><h5>Recebimento real fecha o ciclo</h5><p>Ao registrar a entrada, o histórico passa a alimentar a memória financeira do app para decisões futuras.</p></div></div>
+            </div>
+          </div>
+          <div class="card section-card">
+            <div class="section-head">
+              <div>
+                <h3>Relatório rápido do modelo</h3>
+                <p>O que esse layout prioriza na prática.</p>
+              </div>
+            </div>
+            <div class="flow">
+              <div class="flow-step"><div class="num">A</div><div><h5>Home orientada a caixa</h5><p>Recebido no mês, previsto, atrasado e saldo pendente aparecem antes de qualquer busca de procedimento.</p></div></div>
+              <div class="flow-step"><div class="num">B</div><div><h5>Cirurgia como objeto financeiro</h5><p>O registro deixa de ser apenas agenda e vira um caso completo de remuneração.</p></div></div>
+              <div class="flow-step"><div class="num">C</div><div><h5>Recebimentos separados por evento</h5><p>É possível registrar valores fracionados, acompanhar parcial e enxergar atrasos.</p></div></div>
+              <div class="flow-step"><div class="num">D</div><div><h5>Ajustes preparados para base real</h5><p>Convênios, hospitais, tabela CBHPM e prazos ficam em um bloco administrativo, como no próximo estágio do app.</p></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-ajustes">
+        <div class="grid report-grid">
+          <div class="card setting-card">
+            <h4>Convênios</h4>
+            <p id="plansSummary"></p>
+          </div>
+          <div class="card setting-card">
+            <h4>Hospitais</h4>
+            <p id="hospitalsSummary"></p>
+          </div>
+          <div class="card setting-card">
+            <h4>Base CBHPM interna</h4>
+            <p id="codesSummary"></p>
+          </div>
+        </div>
+
+        <div class="grid layout-2" style="margin-top:18px">
+          <div class="card section-card">
+            <div class="section-head">
+              <div>
+                <h3>Parâmetros administrativos</h3>
+                <p>Área pensada para o próximo passo do produto.</p>
+              </div>
+            </div>
+            <div class="flow">
+              <div class="flow-step"><div class="num">1</div><div><h5>Prazo padrão por convênio</h5><p>Permite que novas cirurgias já nasçam com previsão inteligente de recebimento.</p></div></div>
+              <div class="flow-step"><div class="num">2</div><div><h5>Histórico médio por código</h5><p>Usado para sugerir valor esperado real, não apenas valor teórico.</p></div></div>
+              <div class="flow-step"><div class="num">3</div><div><h5>Importação da tabela médica</h5><p>Pode usar a base da planilha como semente para a busca automática de procedimentos.</p></div></div>
+            </div>
+          </div>
+          <div class="card section-card">
+            <div class="section-head">
+              <div>
+                <h3>Estrutura de navegação final</h3>
+                <p>Desenho já alinhado com a proposta nova do app.</p>
+              </div>
+            </div>
+            <div class="chip-row">
+              <div class="chip">Home</div>
+              <div class="chip">Cirurgias</div>
+              <div class="chip">Recebimentos</div>
+              <div class="chip">Relatórios</div>
+              <div class="chip">Ajustes</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="active" data-view="home">🏠<span>Home</span></button>
+    <button data-view="cirurgias">🗂️<span>Cirurgias</span></button>
+    <button data-view="recebimentos">💰<span>Receb.</span></button>
+    <button data-view="relatorios">📊<span>Relatórios</span></button>
+    <button data-view="ajustes">⚙️<span>Ajustes</span></button>
+  </nav>
+
+  <div class="modal-backdrop" id="caseModalBackdrop">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <h3 style="margin:0">Nova cirurgia</h3>
+          <p class="muted" style="margin:6px 0 0">Cadastro financeiro do caso: dados clínicos, códigos CBHPM, previsão e valor esperado.</p>
+        </div>
+        <button class="btn btn-secondary" id="closeCaseModal">Fechar</button>
+      </div>
+      <div class="modal-body">
+        <div class="step-tabs">
+          <button class="step-tab active" data-step="1">1. Dados do caso</button>
+          <button class="step-tab" data-step="2">2. Procedimentos e auxílios</button>
+          <button class="step-tab" data-step="3">3. Previsão e fechamento</button>
+        </div>
+
+        <section class="step-panel" data-step-panel="1">
+          <div class="field-grid">
+            <div class="field"><label>Paciente</label><input id="casePatient" placeholder="Nome do paciente" /></div>
+            <div class="field"><label>Data da cirurgia</label><input id="caseDate" type="date" /></div>
+            <div class="field"><label>Convênio</label><select id="casePlan" class="select"></select></div>
+            <div class="field"><label>Hospital</label><select id="caseHospital" class="select"></select></div>
+            <div class="field"><label>Prazo previsto de recebimento</label><select id="caseMonths" class="select"><option value="1">1 mês</option><option value="2">2 meses</option><option value="3" selected>3 meses</option><option value="4">4 meses</option></select></div>
+            <div class="field"><label>OPME</label><input id="caseOpme" placeholder="Resumo da OPME" /></div>
+          </div>
+          <div class="field" style="margin-top:14px"><label>Observações</label><textarea id="caseNotes" placeholder="Observações administrativas ou cirúrgicas"></textarea></div>
+        </section>
+
+        <section class="step-panel hide" data-step-panel="2">
+          <div class="field-grid">
+            <div class="field"><label>Pesquisar CBHPM</label><input id="codeSearch" placeholder="Digite nome, código ou palavra-chave" /></div>
+            <div class="field"><label>Categoria rápida</label><select id="codeQuickType" class="select"><option value="all">Todos</option><option value="principal">Procedimentos principais</option><option value="auxilio">Auxílios</option><option value="complementar">Complementares</option></select></div>
+          </div>
+          <div class="code-picker" style="margin-top:14px">
+            <div class="picker-results" id="pickerResults"></div>
+            <div>
+              <h4 style="margin:0 0 10px">Itens selecionados</h4>
+              <div class="selected-items" id="selectedItems"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="step-panel hide" data-step-panel="3">
+          <div class="grid layout-2">
+            <div class="card section-card">
+              <div class="section-head"><div><h3>Resumo do caso</h3><p>Fechamento financeiro antes de salvar.</p></div></div>
+              <div class="flow" id="caseSummary"></div>
+            </div>
+            <div class="card section-card">
+              <div class="section-head"><div><h3>Lógica aplicada</h3><p>O protótipo calcula automaticamente o previsto.</p></div></div>
+              <div class="flow">
+                <div class="flow-step"><div class="num">R$</div><div><h5>Valor esperado</h5><p>Soma de todos os itens adicionados, considerando quantidade e multiplicador.</p></div></div>
+                <div class="flow-step"><div class="num">⏱</div><div><h5>Recebimento previsto</h5><p>Data da cirurgia + prazo escolhido no cadastro.</p></div></div>
+                <div class="flow-step"><div class="num">✓</div><div><h5>Status inicial</h5><p>Todo caso nasce como “realizada” e evolui conforme o faturamento e o recebimento.</p></div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="modal-actions">
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-secondary" id="prevStepBtn">Voltar</button>
+            <button class="btn btn-secondary" id="nextStepBtn">Próxima etapa</button>
+          </div>
+          <button class="btn btn-primary" id="saveCaseBtn">Salvar cirurgia</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="receiveModalBackdrop">
+    <div class="modal" style="max-width:720px">
+      <div class="modal-head">
+        <div>
+          <h3 style="margin:0">Registrar recebimento</h3>
+          <p class="muted" style="margin:6px 0 0">Lance o pagamento real para atualizar pendência, caixa do mês e histórico do caso.</p>
+        </div>
+        <button class="btn btn-secondary" id="closeReceiveModal">Fechar</button>
+      </div>
+      <div class="modal-body">
+        <div class="field-grid">
+          <div class="field"><label>Cirurgia</label><select id="receiptSurgery" class="select"></select></div>
+          <div class="field"><label>Data do pagamento</label><input id="receiptDate" type="date" /></div>
+          <div class="field"><label>Valor recebido</label><input id="receiptAmount" type="number" step="0.01" placeholder="0,00" /></div>
+          <div class="field"><label>Observação</label><input id="receiptNote" placeholder="Ex: repasse parcial, glosa, complemento" /></div>
+        </div>
+        <div class="modal-actions">
+          <div></div>
+          <button class="btn btn-gold" id="saveReceiptBtn">Salvar recebimento</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const storageKey = 'ortopay_finance_model_v2';
+    const cbhpmBase = [
+      { id:'1', code:'3.07.35.16-5', name:'Osteocondroplastia', type:'principal', base:2350 },
+      { id:'2', code:'3.07.35.08-4', name:'Ressecção lateral da clavícula', type:'complementar', base:1413.90 },
+      { id:'3', code:'3.07.18.05-8', name:'Fratura - tratamento cirúrgico', type:'principal', base:761.89 },
+      { id:'4', code:'3.14.03.18-2', name:'Microcirurgia do plexo braquial com neurólise', type:'complementar', base:2527.43 },
+      { id:'5', code:'4.08.11.02-6', name:'Radioscopia para acompanhamento cirúrgico', type:'complementar', base:101.82 },
+      { id:'6', code:'9.99.00.01-1', name:'Auxílio cirúrgico 1º auxiliar', type:'auxilio', base:650 },
+      { id:'7', code:'9.99.00.01-2', name:'Auxílio cirúrgico 2º auxiliar', type:'auxilio', base:420 },
+      { id:'8', code:'3.07.29.18-0', name:'Artrodese cervical', type:'principal', base:3180 },
+      { id:'9', code:'3.07.31.12-0', name:'Artrodese lombar por nível', type:'principal', base:4280 },
+      { id:'10', code:'3.07.31.22-7', name:'Descompressão radicular', type:'complementar', base:1580 },
+      { id:'11', code:'3.07.26.04-8', name:'Reparo artroscópico do manguito rotador', type:'principal', base:3890 },
+      { id:'12', code:'3.07.35.22-0', name:'Sinovectomia via artroscópica', type:'complementar', base:1290 }
+    ];
+    const defaultPlans = ['Unimed','SulAmérica','Bradesco','Particular'];
+    const defaultHospitals = ['Hospital Santa Joana Recife','Hospital Esperança Recife','Real Hospital Português','Hospital Memorial São José'];
+
+    function brl(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}    
+    function parseDate(s){return s?new Date(s+'T12:00:00'):new Date();}
+    function fmtDate(s){if(!s) return '—'; return parseDate(s).toLocaleDateString('pt-BR');}
+    function addMonths(dateStr, months){const d=parseDate(dateStr); d.setMonth(d.getMonth()+Number(months||0)); return d.toISOString().slice(0,10);}    
+    function monthKey(dateStr){const d=parseDate(dateStr); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
+    function monthLabel(key){const [y,m]=key.split('-').map(Number); return new Date(y,m-1,1).toLocaleDateString('pt-BR',{month:'short',year:'numeric'});}
+    function todayKey(){return new Date().toISOString().slice(0,10);}    
+
+    function sampleData(){
+      const today = new Date();
+      const dateA = new Date(today.getFullYear(), today.getMonth()-2, 11).toISOString().slice(0,10);
+      const dateB = new Date(today.getFullYear(), today.getMonth()-1, 5).toISOString().slice(0,10);
+      const dateC = new Date(today.getFullYear(), today.getMonth(), 8).toISOString().slice(0,10);
+      return {
+        plans:[...defaultPlans],
+        hospitals:[...defaultHospitals],
+        surgeries:[
+          {
+            id: crypto.randomUUID(),
+            patient:'Ana Carolina', plan:'Unimed', hospital:'Hospital Santa Joana Recife', surgeryDate:dateA, opme:'Âncoras + radioscopia', receiveMonths:2, receiveForecast:addMonths(dateA,2), notes:'Manguito com complemento de sinovectomia', status:'parcial',
+            items:[
+              { code:'3.07.26.04-8', name:'Reparo artroscópico do manguito rotador', type:'principal', qty:1, multiplier:1, expected:3890 },
+              { code:'3.07.35.22-0', name:'Sinovectomia via artroscópica', type:'complementar', qty:1, multiplier:1, expected:1290 },
+              { code:'9.99.00.01-1', name:'Auxílio cirúrgico 1º auxiliar', type:'auxilio', qty:1, multiplier:1, expected:650 }
+            ],
+            payments:[{ id:crypto.randomUUID(), date:addMonths(dateA,2), amount:3200, note:'Repasse parcial do hospital' }]
+          },
+          {
+            id: crypto.randomUUID(),
+            patient:'José Henrique', plan:'Bradesco', hospital:'Hospital Esperança Recife', surgeryDate:dateB, opme:'Parafusos e cage', receiveMonths:3, receiveForecast:addMonths(dateB,3), notes:'Artrodese lombar em 2 níveis', status:'faturada',
+            items:[
+              { code:'3.07.31.12-0', name:'Artrodese lombar por nível', type:'principal', qty:2, multiplier:1, expected:8560 },
+              { code:'3.07.31.22-7', name:'Descompressão radicular', type:'complementar', qty:1, multiplier:1, expected:1580 },
+              { code:'9.99.00.01-1', name:'Auxílio cirúrgico 1º auxiliar', type:'auxilio', qty:1, multiplier:1, expected:650 }
+            ],
+            payments:[]
+          },
+          {
+            id: crypto.randomUUID(),
+            patient:'Marcos Vinícius', plan:'SulAmérica', hospital:'Real Hospital Português', surgeryDate:dateC, opme:'Âncoras', receiveMonths:1, receiveForecast:addMonths(dateC,1), notes:'Clavícula com ressecção lateral', status:'recebida',
+            items:[
+              { code:'3.07.35.16-5', name:'Osteocondroplastia', type:'principal', qty:1, multiplier:1, expected:2350 },
+              { code:'3.07.35.08-4', name:'Ressecção lateral da clavícula', type:'complementar', qty:1, multiplier:1, expected:1413.90 }
+            ],
+            payments:[{ id:crypto.randomUUID(), date:addMonths(dateC,1), amount:3763.90, note:'Pagamento integral' }]
+          },
+          {
+            id: crypto.randomUUID(),
+            patient:'Paulo Roberto', plan:'Unimed', hospital:'Hospital Memorial São José', surgeryDate:dateB, opme:'Placa bloqueada', receiveMonths:1, receiveForecast:addMonths(dateB,1), notes:'Fratura com microcirurgia', status:'realizada',
+            items:[
+              { code:'3.07.18.05-8', name:'Fratura - tratamento cirúrgico', type:'principal', qty:1, multiplier:1, expected:761.89 },
+              { code:'3.14.03.18-2', name:'Microcirurgia do plexo braquial com neurólise', type:'complementar', qty:1, multiplier:1, expected:2527.43 },
+              { code:'4.08.11.02-6', name:'Radioscopia para acompanhamento cirúrgico', type:'complementar', qty:1, multiplier:1, expected:101.82 }
+            ],
+            payments:[]
+          }
+        ]
+      };
+    }
+
+    function loadState(){
+      const raw = localStorage.getItem(storageKey);
+      if(raw){
+        try{return JSON.parse(raw);}catch(e){}
+      }
+      const seed = sampleData();
+      localStorage.setItem(storageKey, JSON.stringify(seed));
+      return seed;
+    }
+    let state = loadState();
+    let activeView = 'home';
+    let caseStep = 1;
+    let draftItems = [];
+
+    function saveState(){ localStorage.setItem(storageKey, JSON.stringify(state)); }
+    function expectedTotal(surgery){ return surgery.items.reduce((sum,i)=>sum+Number(i.expected||0),0); }
+    function receivedTotal(surgery){ return surgery.payments.reduce((sum,p)=>sum+Number(p.amount||0),0); }
+    function pendingTotal(surgery){ return Math.max(0, expectedTotal(surgery)-receivedTotal(surgery)); }
+    function computedStatus(surgery){
+      const received = receivedTotal(surgery), expected = expectedTotal(surgery);
+      if(received <= 0) return surgery.status === 'faturada' ? 'faturada' : 'realizada';
+      if(received >= expected) return 'recebida';
+      return 'parcial';
+    }
+    function isOverdue(surgery){ return pendingTotal(surgery)>0 && surgery.receiveForecast < todayKey(); }
+
+    function metrics(){
+      const now = new Date();
+      const month = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      let receivedThisMonth = 0, forecastThisMonth = 0, overdue = 0, pending = 0;
+      state.surgeries.forEach(s=>{
+        pending += pendingTotal(s);
+        s.payments.forEach(p=>{ if(monthKey(p.date)===month) receivedThisMonth += Number(p.amount||0); });
+        if(monthKey(s.receiveForecast)===month) forecastThisMonth += pendingTotal(s);
+        if(isOverdue(s)) overdue += pendingTotal(s);
+      });
+      return { receivedThisMonth, forecastThisMonth, overdue, pending, surgeryCount: state.surgeries.length };
+    }
+
+    function buildForecast(){
+      const map = new Map();
+      state.surgeries.forEach(s=>{
+        const key = monthKey(s.receiveForecast);
+        map.set(key,(map.get(key)||0)+pendingTotal(s));
+      });
+      return [...map.entries()].sort((a,b)=>a[0].localeCompare(b[0])).slice(0,6);
+    }
+
+    function setActiveView(view){
+      activeView = view;
+      document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active', v.id===`view-${view}`));
+      document.querySelectorAll('[data-view]').forEach(btn=>btn.classList.toggle('active', btn.dataset.view===view));
+      const heads = {
+        home:['Home financeira','O núcleo do OrtoPay passa a ser o caixa do cirurgião: o que já entrou, o que deve entrar neste mês e o que está atrasado para conferência.'],
+        cirurgias:['Cirurgias e casos','Cada cirurgia passa a ser um objeto financeiro completo, com múltiplos códigos, valor esperado e histórico de pagamento.'],
+        recebimentos:['Recebimentos','Aqui o app deixa de ser agenda e vira ferramenta de conferência: o que entrou, quando entrou e o que ainda falta receber.'],
+        relatorios:['Relatórios','Visão executiva para entender produção, pendências e concentração financeira por hospital, convênio e código.'],
+        ajustes:['Ajustes e base','Área preparada para convênios, hospitais, base CBHPM e parâmetros de previsão do OrtoPay.']
+      };
+      document.getElementById('headlineBox').innerHTML = `<h2>${heads[view][0]}</h2><p>${heads[view][1]}</p>`;
+    }
+
+    function renderKPIs(){
+      const m = metrics();
+      document.getElementById('kpiGrid').innerHTML = `
+        <div class="card kpi primary"><div class="label">Recebido no mês</div><div class="value">${brl(m.receivedThisMonth)}</div><div class="meta">Somatório dos pagamentos registrados no mês corrente.</div></div>
+        <div class="card kpi gold"><div class="label">Previsto neste mês</div><div class="value">${brl(m.forecastThisMonth)}</div><div class="meta">Saldo pendente com previsão para o mês atual.</div></div>
+        <div class="card kpi red"><div class="label">Em atraso</div><div class="value">${brl(m.overdue)}</div><div class="meta">Casos cuja previsão já venceu e ainda têm saldo.</div></div>
+        <div class="card kpi green"><div class="label">Pendente total</div><div class="value">${brl(m.pending)}</div><div class="meta">${m.surgeryCount} cirurgias cadastradas na base do app.</div></div>`;
+    }
+
+    function renderUpcoming(){
+      const items = [...state.surgeries]
+        .filter(s=>pendingTotal(s)>0)
+        .sort((a,b)=>a.receiveForecast.localeCompare(b.receiveForecast))
+        .slice(0,5);
+      const el = document.getElementById('upcomingList');
+      if(!items.length){ el.innerHTML = '<div class="empty-state">Nenhum recebimento pendente no momento.</div>'; return; }
+      el.innerHTML = items.map(s=>`
+        <div class="timeline-item">
+          <div>
+            <strong>${s.patient}</strong>
+            <small>${s.plan} • ${s.hospital} • previsto em ${fmtDate(s.receiveForecast)}</small>
+          </div>
+          <div class="amount ${isOverdue(s)?'red':'gold'}">${brl(pendingTotal(s))}</div>
+        </div>`).join('');
+    }
+
+    function renderForecast(){
+      const items = buildForecast();
+      const max = Math.max(...items.map(i=>i[1]),1);
+      const el = document.getElementById('forecastBars');
+      if(!items.length){ el.innerHTML='<div class="empty-state">A previsão aparecerá aqui conforme novas cirurgias forem adicionadas.</div>'; return; }
+      el.innerHTML = items.map(([key,val])=>`
+        <div class="month-row">
+          <div class="muted">${monthLabel(key)}</div>
+          <div class="track"><div class="fill" style="width:${(val/max)*100}%"></div></div>
+          <div class="amount">${brl(val)}</div>
+        </div>`).join('');
+    }
+
+    function surgeryCard(s, compact=false){
+      const status = computedStatus(s);
+      const expected = expectedTotal(s), received = receivedTotal(s), pending = pendingTotal(s);
+      const overdueBadge = isOverdue(s) ? '<span class="badge atrasada">Atrasada</span>' : '';
+      return `
+        <div class="surgery-card">
+          <div class="surgery-top">
+            <div>
+              <div class="title-row">
+                <strong>${s.patient}</strong>
+                <span class="badge ${status}">${status==='parcial'?'Parcial':status.charAt(0).toUpperCase()+status.slice(1)}</span>
+                ${overdueBadge}
+              </div>
+              <div class="muted" style="margin-top:8px">${fmtDate(s.surgeryDate)} • ${s.plan} • ${s.hospital}</div>
+              <div class="muted" style="margin-top:4px">Previsão: ${fmtDate(s.receiveForecast)} • ${s.items.length} itens no caso</div>
+            </div>
+            <div class="text-right">
+              <div class="muted" style="font-size:12px">Saldo pendente</div>
+              <div class="amount ${isOverdue(s)?'red':'gold'}">${brl(pending)}</div>
+            </div>
+          </div>
+          <div class="split">
+            <div class="mini-stat"><span>Previsto total</span><strong>${brl(expected)}</strong></div>
+            <div class="mini-stat"><span>Recebido</span><strong>${brl(received)}</strong></div>
+            <div class="mini-stat"><span>OPME / Observação</span><strong style="font-size:13px">${s.opme || s.notes || '—'}</strong></div>
+          </div>
+          ${compact ? '' : `<div class="code-table">
+            <div class="code-row head"><div>Código</div><div>Descrição</div><div>Qtd</div><div>Multip.</div><div class="text-right">Previsto</div></div>
+            ${s.items.map(i=>`<div class="code-row"><div><strong>${i.code}</strong></div><div>${i.name}<div class="muted" style="font-size:12px;margin-top:4px">${i.type}</div></div><div>${i.qty}</div><div>${i.multiplier}</div><div class="text-right">${brl(i.expected)}</div></div>`).join('')}
+          </div>`}
+        </div>`;
+    }
+
+    function renderRecentSurgeries(){
+      const items = [...state.surgeries].sort((a,b)=>b.surgeryDate.localeCompare(a.surgeryDate)).slice(0,3);
+      const el = document.getElementById('recentSurgeries');
+      el.innerHTML = items.map(s=>surgeryCard(s,true)).join('');
+    }
+
+    function renderAlerts(){
+      const alertList = [];
+      const overdueCases = state.surgeries.filter(isOverdue);
+      if(overdueCases.length) alertList.push({title:`${overdueCases.length} caso(s) com previsão vencida`, text:'Esses casos já deveriam ter recebido algum repasse.', amount: overdueCases.reduce((a,s)=>a+pendingTotal(s),0), tone:'red'});
+      const partial = state.surgeries.filter(s=>computedStatus(s)==='parcial');
+      if(partial.length) alertList.push({title:`${partial.length} caso(s) com pagamento parcial`, text:'Bom ponto para conferência de complemento ou glosa.', amount: partial.reduce((a,s)=>a+pendingTotal(s),0), tone:'gold'});
+      const thisMonthCount = state.surgeries.filter(s=>monthKey(s.receiveForecast)===monthKey(todayKey()) && pendingTotal(s)>0).length;
+      alertList.push({title:`${thisMonthCount} caso(s) previstos para este mês`, text:'Entradas esperadas já posicionadas no fluxo de caixa.', amount: metrics().forecastThisMonth, tone:'green'});
+      const el = document.getElementById('alertList');
+      el.innerHTML = alertList.map(a=>`<div class="timeline-item"><div><strong>${a.title}</strong><small>${a.text}</small></div><div class="amount ${a.tone}">${brl(a.amount)}</div></div>`).join('');
+    }
+
+    function renderSurgeryList(){
+      const statusFilter = document.getElementById('surgeryFilterStatus').value;
+      const q = document.getElementById('surgerySearch').value.trim().toLowerCase();
+      let items = [...state.surgeries].sort((a,b)=>b.surgeryDate.localeCompare(a.surgeryDate));
+      if(statusFilter !== 'all') items = items.filter(s=>computedStatus(s)===statusFilter || (statusFilter==='realizada' && computedStatus(s)==='realizada') || (statusFilter==='faturada' && computedStatus(s)==='faturada'));
+      if(q) items = items.filter(s=>[
+        s.patient,s.plan,s.hospital,s.notes,s.opme,
+        ...s.items.flatMap(i=>[i.code,i.name])
+      ].join(' ').toLowerCase().includes(q));
+      document.getElementById('surgeryList').innerHTML = items.length ? items.map(s=>surgeryCard(s,false)).join('') : '<div class="empty-state">Nenhuma cirurgia encontrada com esse filtro.</div>';
+    }
+
+    function renderReceiptMonthFilter(){
+      const months = new Set([monthKey(todayKey())]);
+      state.surgeries.forEach(s=>{ months.add(monthKey(s.receiveForecast)); s.payments.forEach(p=>months.add(monthKey(p.date))); });
+      const opts = [...months].sort().map(k=>`<option value="${k}">${monthLabel(k)}</option>`).join('');
+      const sel = document.getElementById('receiptFilterMonth');
+      const current = sel.value || monthKey(todayKey());
+      sel.innerHTML = opts;
+      sel.value = [...months].includes(current) ? current : monthKey(todayKey());
+    }
+
+    function renderReceipts(){
+      const filterMonth = document.getElementById('receiptFilterMonth').value || monthKey(todayKey());
+      const cards = [];
+      state.surgeries.forEach(s=>{
+        const receipts = s.payments.filter(p=>monthKey(p.date)===filterMonth);
+        if(receipts.length){
+          receipts.forEach(r=>cards.push(`
+            <div class="receipt-card">
+              <div class="receipt-top">
+                <div>
+                  <strong>${s.patient}</strong>
+                  <div class="muted" style="margin-top:8px">${s.plan} • ${s.hospital}</div>
+                  <div class="muted" style="margin-top:4px">Pagamento em ${fmtDate(r.date)} • ${r.note || 'Sem observação'}</div>
+                </div>
+                <div class="amount green">${brl(r.amount)}</div>
+              </div>
+            </div>`));
+        }
+      });
+      const pendingThisMonth = state.surgeries.filter(s=>monthKey(s.receiveForecast)===filterMonth && pendingTotal(s)>0).map(s=>`
+        <div class="receipt-card">
+          <div class="receipt-top">
+            <div>
+              <strong>${s.patient}</strong>
+              <div class="muted" style="margin-top:8px">Previsão em ${fmtDate(s.receiveForecast)} • ${s.plan}</div>
+              <div class="muted" style="margin-top:4px">${s.hospital} • ${computedStatus(s)}</div>
+            </div>
+            <div class="amount gold">${brl(pendingTotal(s))}</div>
+          </div>
+        </div>`);
+      document.getElementById('receiptList').innerHTML = [...cards, ...pendingThisMonth].join('') || '<div class="empty-state">Sem movimentações para o mês selecionado.</div>';
+    }
+
+    function summarizeBy(field, metric='expected'){
+      const map = new Map();
+      state.surgeries.forEach(s=>{
+        const val = metric==='pending' ? pendingTotal(s) : expectedTotal(s);
+        map.set(s[field], (map.get(s[field])||0) + val);
+      });
+      return [...map.entries()].sort((a,b)=>b[1]-a[1])[0];
+    }
+
+    function renderReports(){
+      const hospital = summarizeBy('hospital');
+      const planPending = summarizeBy('plan','pending');
+      const codeMap = new Map();
+      state.surgeries.forEach(s=>s.items.forEach(i=>codeMap.set(`${i.code} • ${i.name}`, (codeMap.get(`${i.code} • ${i.name}`)||0)+Number(i.qty||0))));
+      const topCode = [...codeMap.entries()].sort((a,b)=>b[1]-a[1])[0];
+      document.getElementById('topHospital').textContent = hospital ? `${hospital[0]} com ${brl(hospital[1])} em valor esperado acumulado.` : 'Ainda sem dados.';
+      document.getElementById('topPlanPending').textContent = planPending ? `${planPending[0]} concentra ${brl(planPending[1])} em saldo pendente.` : 'Ainda sem dados.';
+      document.getElementById('topCode').textContent = topCode ? `${topCode[0]} apareceu ${topCode[1]} vez(es) nos casos lançados.` : 'Ainda sem dados.';
+    }
+
+    function renderSettings(){
+      document.getElementById('plansSummary').textContent = `${state.plans.length} convênios cadastrados. Próximo passo ideal: prazo padrão por convênio e média histórica por código.`;
+      document.getElementById('hospitalsSummary').textContent = `${state.hospitals.length} hospitais cadastrados. Essa base sustenta relatórios de produção e recebimento por unidade.`;
+      document.getElementById('codesSummary').textContent = `${cbhpmBase.length} códigos de exemplo no protótipo. Estrutura pronta para receber a base real da planilha/CBHPM.`;
+    }
+
+    function populateCaseSelects(){
+      document.getElementById('casePlan').innerHTML = state.plans.map(p=>`<option>${p}</option>`).join('');
+      document.getElementById('caseHospital').innerHTML = state.hospitals.map(h=>`<option>${h}</option>`).join('');
+    }
+
+    function renderPicker(){
+      const q = document.getElementById('codeSearch').value.trim().toLowerCase();
+      const type = document.getElementById('codeQuickType').value;
+      let items = cbhpmBase.filter(i=>type==='all' || i.type===type);
+      if(q) items = items.filter(i=>`${i.code} ${i.name}`.toLowerCase().includes(q));
+      const el = document.getElementById('pickerResults');
+      el.innerHTML = items.map(i=>`
+        <div class="picker-item">
+          <div>
+            <strong>${i.code}</strong>
+            <small>${i.name}<br>${i.type} • base ${brl(i.base)}</small>
+          </div>
+          <button class="btn btn-secondary" onclick="addDraftItem('${i.id}')">Adicionar</button>
+        </div>`).join('') || '<div class="empty-state">Nenhum código encontrado.</div>';
+    }
+
+    window.addDraftItem = function(id){
+      const base = cbhpmBase.find(i=>i.id===id);
+      if(!base) return;
+      draftItems.push({ code:base.code, name:base.name, type:base.type, qty:1, multiplier:1, expected:base.base });
+      renderSelectedItems();
+      updateCaseSummary();
+    }
+
+    window.removeDraftItem = function(idx){ draftItems.splice(idx,1); renderSelectedItems(); updateCaseSummary(); }
+    window.updateDraftItem = function(idx, field, value){
+      const item = draftItems[idx];
+      item[field] = field==='name'||field==='code'||field==='type' ? value : Number(value||0);
+      const base = cbhpmBase.find(i=>i.code===item.code);
+      const refBase = base ? base.base : (item.expected / Math.max(1,item.qty||1) / Math.max(1,item.multiplier||1));
+      item.expected = Number(refBase) * Math.max(1,Number(item.qty||1)) * Math.max(1,Number(item.multiplier||1));
+      renderSelectedItems();
+      updateCaseSummary();
+    }
+
+    function renderSelectedItems(){
+      const el = document.getElementById('selectedItems');
+      if(!draftItems.length){ el.innerHTML = '<div class="empty-state">Adicione procedimentos principais, complementares e auxílios para montar o caso.</div>'; return; }
+      el.innerHTML = draftItems.map((i,idx)=>`
+        <div class="selected-item">
+          <div class="selected-item-top">
+            <div><strong>${i.code}</strong><div class="muted" style="margin-top:4px">${i.name} • ${i.type}</div></div>
+            <button class="btn btn-secondary" onclick="removeDraftItem(${idx})">Remover</button>
+          </div>
+          <div class="inline-grid">
+            <div class="field"><label>Quantidade</label><input type="number" min="1" value="${i.qty}" onchange="updateDraftItem(${idx},'qty',this.value)" /></div>
+            <div class="field"><label>Multiplicador</label><input type="number" min="1" step="0.1" value="${i.multiplier}" onchange="updateDraftItem(${idx},'multiplier',this.value)" /></div>
+            <div class="field"><label>Tipo</label><select class="select" onchange="updateDraftItem(${idx},'type',this.value)">
+              <option value="principal" ${i.type==='principal'?'selected':''}>Principal</option>
+              <option value="complementar" ${i.type==='complementar'?'selected':''}>Complementar</option>
+              <option value="auxilio" ${i.type==='auxilio'?'selected':''}>Auxílio</option>
+            </select></div>
+            <div class="field"><label>Previsto do item</label><input value="${brl(i.expected)}" disabled /></div>
+          </div>
+        </div>`).join('');
+    }
+
+    function updateCaseSummary(){
+      const date = document.getElementById('caseDate').value;
+      const months = document.getElementById('caseMonths').value || 0;
+      const total = draftItems.reduce((sum,i)=>sum+Number(i.expected||0),0);
+      document.getElementById('caseSummary').innerHTML = `
+        <div class="flow-step"><div class="num">👤</div><div><h5>${document.getElementById('casePatient').value || 'Paciente não informado'}</h5><p>${document.getElementById('casePlan').value || 'Plano'} • ${document.getElementById('caseHospital').value || 'Hospital'}</p></div></div>
+        <div class="flow-step"><div class="num">📅</div><div><h5>Cirurgia em ${date ? fmtDate(date) : '—'}</h5><p>Recebimento previsto para ${date ? fmtDate(addMonths(date, months)) : '—'}</p></div></div>
+        <div class="flow-step"><div class="num">#</div><div><h5>${draftItems.length} item(ns) no caso</h5><p>Procedimentos, complementares e auxílios somados em um único objeto financeiro.</p></div></div>
+        <div class="flow-step"><div class="num">R$</div><div><h5>${brl(total)}</h5><p>Valor esperado inicial do caso com base nos itens selecionados.</p></div></div>`;
+    }
+
+    function openCaseModal(){
+      document.getElementById('caseModalBackdrop').classList.add('open');
+      populateCaseSelects();
+      document.getElementById('caseDate').value = todayKey();
+      renderPicker();
+      renderSelectedItems();
+      updateCaseSummary();
+      setCaseStep(1);
+    }
+    function closeCaseModal(){ document.getElementById('caseModalBackdrop').classList.remove('open'); }
+    function resetCaseDraft(){
+      draftItems = [];
+      ['casePatient','caseDate','caseOpme','caseNotes'].forEach(id=>document.getElementById(id).value='');
+      document.getElementById('caseMonths').value='3';
+      document.getElementById('codeSearch').value='';
+      document.getElementById('codeQuickType').value='all';
+    }
+    function setCaseStep(step){
+      caseStep = Math.max(1,Math.min(3,step));
+      document.querySelectorAll('.step-tab').forEach(btn=>btn.classList.toggle('active', Number(btn.dataset.step)===caseStep));
+      document.querySelectorAll('.step-panel').forEach(panel=>panel.classList.toggle('hide', Number(panel.dataset.stepPanel)!==caseStep));
+      document.getElementById('prevStepBtn').style.visibility = caseStep===1 ? 'hidden':'visible';
+      document.getElementById('nextStepBtn').style.visibility = caseStep===3 ? 'hidden':'visible';
+      updateCaseSummary();
+    }
+
+    function saveCase(){
+      const patient = document.getElementById('casePatient').value.trim();
+      const surgeryDate = document.getElementById('caseDate').value;
+      if(!patient || !surgeryDate || !draftItems.length){ alert('Preencha paciente, data e adicione ao menos um item ao caso.'); return; }
+      const plan = document.getElementById('casePlan').value;
+      const hospital = document.getElementById('caseHospital').value;
+      const receiveMonths = Number(document.getElementById('caseMonths').value||0);
+      state.surgeries.unshift({
+        id: crypto.randomUUID(),
+        patient, plan, hospital, surgeryDate,
+        opme: document.getElementById('caseOpme').value.trim(),
+        notes: document.getElementById('caseNotes').value.trim(),
+        receiveMonths,
+        receiveForecast: addMonths(surgeryDate, receiveMonths),
+        status: 'realizada',
+        items: JSON.parse(JSON.stringify(draftItems)),
+        payments: []
+      });
+      saveState();
+      resetCaseDraft();
+      closeCaseModal();
+      renderAll();
+      setActiveView('cirurgias');
+    }
+
+    function populateReceiptForm(){
+      const select = document.getElementById('receiptSurgery');
+      const pending = state.surgeries.filter(s=>pendingTotal(s)>0);
+      select.innerHTML = pending.map(s=>`<option value="${s.id}">${s.patient} • ${s.plan} • saldo ${brl(pendingTotal(s))}</option>`).join('');
+      document.getElementById('receiptDate').value = todayKey();
+      document.getElementById('receiptAmount').value = '';
+      document.getElementById('receiptNote').value = '';
+    }
+    function openReceiveModal(){ populateReceiptForm(); document.getElementById('receiveModalBackdrop').classList.add('open'); }
+    function closeReceiveModal(){ document.getElementById('receiveModalBackdrop').classList.remove('open'); }
+    function saveReceipt(){
+      const id = document.getElementById('receiptSurgery').value;
+      const amount = Number(document.getElementById('receiptAmount').value||0);
+      const date = document.getElementById('receiptDate').value;
+      if(!id || !amount || !date){ alert('Selecione a cirurgia e preencha valor e data.'); return; }
+      const surgery = state.surgeries.find(s=>s.id===id); if(!surgery) return;
+      surgery.payments.push({ id: crypto.randomUUID(), amount, date, note: document.getElementById('receiptNote').value.trim() });
+      surgery.status = computedStatus(surgery);
+      saveState();
+      closeReceiveModal();
+      renderAll();
+      setActiveView('recebimentos');
+    }
+
+    function renderAll(){
+      renderKPIs();
+      renderUpcoming();
+      renderForecast();
+      renderRecentSurgeries();
+      renderAlerts();
+      renderSurgeryList();
+      renderReceiptMonthFilter();
+      renderReceipts();
+      renderReports();
+      renderSettings();
+      populateCaseSelects();
+    }
+
+    document.querySelectorAll('#sideNav [data-view], #bottomNav [data-view]').forEach(btn=>btn.addEventListener('click',()=>setActiveView(btn.dataset.view)));
+    document.querySelectorAll('[data-go-view]').forEach(btn=>btn.addEventListener('click',()=>setActiveView(btn.dataset.goView)));
+    document.getElementById('openNewCase').addEventListener('click', openCaseModal);
+    document.getElementById('openNewCaseTop').addEventListener('click', openCaseModal);
+    document.getElementById('closeCaseModal').addEventListener('click', closeCaseModal);
+    document.getElementById('openReceiveModal').addEventListener('click', openReceiveModal);
+    document.getElementById('closeReceiveModal').addEventListener('click', closeReceiveModal);
+    document.getElementById('saveReceiptBtn').addEventListener('click', saveReceipt);
+    document.getElementById('saveCaseBtn').addEventListener('click', saveCase);
+    document.getElementById('prevStepBtn').addEventListener('click', ()=>setCaseStep(caseStep-1));
+    document.getElementById('nextStepBtn').addEventListener('click', ()=>setCaseStep(caseStep+1));
+    document.querySelectorAll('.step-tab').forEach(btn=>btn.addEventListener('click',()=>setCaseStep(Number(btn.dataset.step))));
+    document.getElementById('seedDemoBtn').addEventListener('click', ()=>{ state = sampleData(); saveState(); renderAll(); setActiveView('home'); });
+    document.getElementById('surgeryFilterStatus').addEventListener('change', renderSurgeryList);
+    document.getElementById('surgerySearch').addEventListener('input', renderSurgeryList);
+    document.getElementById('receiptFilterMonth').addEventListener('change', renderReceipts);
+    document.getElementById('codeSearch').addEventListener('input', renderPicker);
+    document.getElementById('codeQuickType').addEventListener('change', renderPicker);
+    ['casePatient','caseDate','casePlan','caseHospital','caseMonths'].forEach(id=>document.getElementById(id).addEventListener('input', updateCaseSummary));
+    ['casePlan','caseHospital','caseMonths'].forEach(id=>document.getElementById(id).addEventListener('change', updateCaseSummary));
+
+    renderAll();
+  </script>
+</body>
+</html>
